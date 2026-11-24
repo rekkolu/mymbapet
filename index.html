@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>MymbaPet — Protótipo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F0E3;
+    --card:#FDFBF4;
+    --ink:#232920;
+    --ink-soft:#5B6155;
+    --forest:#2E4A3B;
+    --forest-light:#4E7059;
+    --sage:#7FA377;
+    --sage-bg:#E4EDDE;
+    --butter:#D79C2E;
+    --butter-bg:#F6E9C9;
+    --clay:#C1543A;
+    --clay-bg:#F3DCD3;
+    --line:#DCD5C1;
+    --radius-lg:26px;
+    --radius-md:18px;
+    --radius-sm:12px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#E7E2D2;
+    font-family:'Inter', sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:40px 16px;
+    min-height:100vh;
+  }
+  .device{
+    width:390px;
+    max-width:100%;
+    background:var(--paper);
+    border-radius:44px;
+    border:8px solid var(--ink);
+    overflow:hidden;
+    box-shadow:0 30px 60px -20px rgba(35,41,32,0.45);
+    position:relative;
+  }
+  .screen{
+    height:844px;
+    max-height:calc(100vh - 80px);
+    overflow-y:auto;
+    padding-bottom:104px;
+    scrollbar-width:none;
+    position:relative;
+  }
+  .screen::-webkit-scrollbar{display:none;}
+
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 26px 6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink);
+  }
+
+  /* header (persists across tabs) */
+  .header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 22px 18px;
+  }
+  .pet-select{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .avatar{
+    width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #E8B978, var(--butter));
+    border:2.5px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px;
+  }
+  .pet-name-block .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .pet-name-block .name{
+    font-family:'Fraunces', serif;
+    font-weight:600; font-size:19px;
+    display:flex; align-items:center; gap:4px;
+  }
+  .chevron{ font-size:12px; color:var(--forest-light); margin-top:2px; }
+  .bell{
+    width:40px; height:40px; border-radius:50%;
+    background:var(--card); border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    position:relative; cursor:pointer;
+  }
+  .bell::after{
+    content:''; position:absolute; top:8px; right:9px;
+    width:7px; height:7px; border-radius:50%;
+    background:var(--clay); border:1.5px solid var(--paper);
+  }
+
+  .page{ display:none; }
+  .page.active{ display:block; }
+
+  .section-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 22px 12px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+
+  /* ===================== TAB 1 — CARTEIRA DE VACINAÇÃO ===================== */
+
+  .passport{
+    margin:4px 20px 18px;
+    background:var(--forest);
+    border-radius:var(--radius-lg);
+    color:#F4F0E3;
+    position:relative;
+    padding:22px 20px 20px;
+    overflow:hidden;
+  }
+  .passport::before{
+    content:''; position:absolute; inset:8px;
+    border:1.5px dashed rgba(244,240,227,0.28);
+    border-radius:18px; pointer-events:none;
+  }
+  .passport-eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:#B9CBBE; margin-bottom:8px;
+  }
+  .passport-row{ display:flex; justify-content:space-between; align-items:flex-end; gap:14px; }
+  .passport-title{ font-family:'Fraunces', serif; font-weight:600; font-size:22px; line-height:1.25; max-width:190px; }
+  .passport-date{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:#CBDACB; margin-top:8px; }
+  .stamp{
+    width:74px; height:74px; border-radius:50%;
+    border:2px dashed #E3A25C;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transform:rotate(-9deg); flex-shrink:0;
+    background:rgba(230,150,70,0.08);
+  }
+  .stamp .num{ font-family:'Fraunces', serif; font-weight:700; font-size:22px; color:#EDB169; line-height:1; }
+  .stamp .txt{ font-family:'IBM Plex Mono', monospace; font-size:8px; letter-spacing:.06em; color:#EDB169; text-transform:uppercase; margin-top:2px; }
+
+  .passport-stats{
+    display:flex; gap:8px; margin-top:16px;
+  }
+  .pstat{
+    flex:1; background:rgba(244,240,227,0.09);
+    border:1px solid rgba(244,240,227,0.16);
+    border-radius:12px; padding:8px 6px; text-align:center;
+  }
+  .pstat .n{ font-family:'Fraunces', serif; font-weight:700; font-size:17px; }
+  .pstat .l{ font-family:'IBM Plex Mono', monospace; font-size:8.5px; letter-spacing:.05em; text-transform:uppercase; color:#CBDACB; margin-top:2px; }
+
+  .segmented{
+    display:flex; gap:6px;
+    margin:0 20px 16px;
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:999px; padding:4px;
+  }
+  .seg-btn{
+    flex:1; text-align:center; padding:8px 4px;
+    font-family:'Inter'; font-weight:600; font-size:12px;
+    color:var(--ink-soft); border-radius:999px; cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .seg-btn.active{ background:var(--forest); color:#F4F0E3; }
+
+  .vax-list{ margin:0 20px 8px; display:flex; flex-direction:column; gap:10px; }
+  .vax-card{
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:var(--radius-md);
+    padding:14px 14px 14px 12px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .vax-icon{
+    width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; flex-shrink:0; margin-top:1px;
+    border:1.5px dashed;
+  }
+  .vax-icon.aplicada{ background:var(--sage-bg); border-color:var(--sage); }
+  .vax-icon.atrasada{ background:var(--clay-bg); border-color:var(--clay); }
+  .vax-icon.proxima, .vax-icon.agendada{ background:var(--butter-bg); border-color:var(--butter); }
+
+  .vax-body{ flex:1; min-width:0; }
+  .vax-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .vax-name{ font-family:'Fraunces', serif; font-weight:600; font-size:14.5px; line-height:1.25; }
+  .vax-type{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); margin-top:2px; }
+  .vax-meta{ font-size:12px; color:var(--ink-soft); margin-top:6px; }
+  .vax-clinic{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+
+  .status-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px; font-weight:500;
+    padding:4px 9px; border-radius:999px;
+    white-space:nowrap; flex-shrink:0;
+  }
+  .status-pill.aplicada{ background:var(--sage-bg); color:var(--forest); }
+  .status-pill.atrasada{ background:var(--clay-bg); color:var(--clay); }
+  .status-pill.proxima, .status-pill.agendada{ background:var(--butter-bg); color:#8A6217; }
+
+  .empty-state{
+    margin:20px 20px 0; text-align:center; padding:34px 16px;
+    background:var(--card); border:1.5px dashed var(--line); border-radius:var(--radius-md);
+  }
+  .empty-state .e-icon{ font-size:26px; margin-bottom:8px; }
+  .empty-state .e-t{ font-family:'Fraunces', serif; font-weight:600; font-size:14px; }
+  .empty-state .e-s{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+
+  .fab{
+    position:absolute; right:20px; bottom:118px;
+    width:54px; height:54px; border-radius:50%;
+    background:var(--forest); color:#F4F0E3;
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:600;
+    box-shadow:0 10px 22px -8px rgba(46,74,59,0.55);
+    cursor:pointer; border:2px solid var(--ink); z-index:20;
+  }
+
+  /* modal / bottom sheet */
+  .modal-overlay{
+    position:absolute; inset:0; background:rgba(35,41,32,0.45);
+    display:none; align-items:flex-end; z-index:30;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-sheet{
+    width:100%; background:var(--paper);
+    border-radius:24px 24px 0 0;
+    padding:20px 20px 26px;
+    border-top:2px solid var(--ink);
+    max-height:80%; overflow-y:auto;
+  }
+  .modal-handle{ width:38px; height:4px; background:var(--line); border-radius:99px; margin:0 auto 14px; }
+  .modal-title{ font-family:'Fraunces', serif; font-weight:600; font-size:18px; margin-bottom:14px; }
+  .field{ margin-bottom:12px; }
+  .field label{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; padding:11px 12px; border-radius:var(--radius-sm);
+    border:1.5px solid var(--line); background:var(--card);
+    font-family:'Inter'; font-size:13.5px; color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline:2px solid var(--forest-light); outline-offset:1px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .modal-actions{ display:flex; gap:10px; margin-top:16px; }
+  .btn{
+    flex:1; text-align:center; padding:12px; border-radius:999px;
+    font-family:'Inter'; font-weight:600; font-size:13.5px; cursor:pointer;
+    border:1.5px solid var(--line);
+  }
+  .btn-primary{ background:var(--forest); color:#F4F0E3; border-color:var(--forest); }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); }
+
+  /* ===================== TAB 2 — EMERGÊNCIA ===================== */
+  .emg-hero{
+    margin:4px 20px 18px; background:var(--clay);
+    border-radius:var(--radius-lg); color:#FBEDE7;
+    padding:20px; position:relative; overflow:hidden;
+  }
+  .emg-hero::before{
+    content:''; position:absolute; inset:8px;
+    border:1.5px dashed rgba(251,237,231,0.3); border-radius:18px; pointer-events:none;
+  }
+  .emg-eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:#F5CFC2; margin-bottom:8px; }
+  .emg-title{ font-family:'Fraunces', serif; font-weight:600; font-size:20px; max-width:220px; line-height:1.3; }
+  .alert-btn{
+    margin-top:16px; width:100%; text-align:center;
+    background:#FBEDE7; color:var(--clay);
+    font-family:'Inter'; font-weight:700; font-size:14px;
+    padding:13px; border-radius:999px; cursor:pointer;
+    border:2px solid var(--ink); transition:all .15s ease;
+  }
+  .alert-btn.active{ background:var(--ink); color:#FBEDE7; }
+
+  .qr-wrap{
+    margin:0 20px 20px; background:var(--card); border:1.5px solid var(--line);
+    border-radius:var(--radius-lg); padding:20px; display:flex; gap:16px; align-items:center;
+  }
+  .qr-box{
+    width:88px; height:88px; border-radius:14px; flex-shrink:0;
+    border:2px dashed var(--forest-light); background:var(--paper);
+    display:grid; grid-template-columns:repeat(5,1fr); grid-template-rows:repeat(5,1fr);
+    padding:8px; gap:2px;
+  }
+  .qr-box span{ background:var(--forest); border-radius:1px; }
+  .qr-box span.off{ background:transparent; }
+  .qr-info .qt{ font-family:'Fraunces', serif; font-weight:600; font-size:14.5px; }
+  .qr-info .qs{ font-size:11.5px; color:var(--ink-soft); margin-top:4px; line-height:1.4; }
+
+  .map-mock{
+    margin:0 20px 20px; height:150px; border-radius:var(--radius-lg);
+    border:1.5px solid var(--line); position:relative; overflow:hidden;
+    background:
+      linear-gradient(rgba(126,163,119,0.14),rgba(126,163,119,0.14)),
+      repeating-linear-gradient(0deg, var(--sage-bg) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, var(--sage-bg) 0 1px, transparent 1px 28px),
+      var(--paper);
+  }
+  .map-pin{
+    position:absolute; top:52%; left:46%;
+    width:16px; height:16px; border-radius:50% 50% 50% 0;
+    background:var(--clay); border:2px solid var(--ink);
+    transform:rotate(-45deg);
+  }
+  .map-tag{
+    position:absolute; left:14px; bottom:14px;
+    background:var(--card); border:1.5px solid var(--line);
+    border-radius:10px; padding:6px 10px;
+    font-family:'IBM Plex Mono', monospace; font-size:10px;
+  }
+
+  .owner-card{
+    margin:0 20px 10px; background:var(--card); border:1.5px solid var(--line);
+    border-radius:var(--radius-lg); padding:16px 18px;
+  }
+  .owner-row{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-top:1px solid var(--line); }
+  .owner-row:first-of-type{ border-top:none; }
+  .owner-row .ok{ font-size:11.5px; color:var(--ink-soft); font-family:'IBM Plex Mono', monospace; }
+  .owner-row .ov{ font-size:13px; font-weight:600; }
+
+  /* ===================== TAB 3 — LOJA PARCEIRA ===================== */
+  .store-scroll{ display:flex; gap:12px; overflow-x:auto; padding:0 20px 6px; margin-bottom:22px; scrollbar-width:none; }
+  .store-scroll::-webkit-scrollbar{ display:none; }
+  .store-card{
+    flex-shrink:0; width:160px; background:var(--card); border:1.5px solid var(--line);
+    border-radius:var(--radius-md); padding:14px;
+  }
+  .store-icon{ width:38px; height:38px; border-radius:50%; background:var(--sage-bg); display:flex; align-items:center; justify-content:center; font-size:17px; margin-bottom:10px; }
+  .store-name{ font-family:'Fraunces', serif; font-weight:600; font-size:13.5px; line-height:1.25; }
+  .store-meta{ font-size:11px; color:var(--ink-soft); margin-top:5px; }
+  .store-dist{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--forest-light); margin-top:8px; }
+
+  .product-list{ margin:0 20px; display:flex; flex-direction:column; gap:10px; }
+  .product-card{
+    display:flex; align-items:center; gap:12px;
+    background:var(--card); border:1.5px solid var(--line);
+    border-radius:var(--radius-md); padding:11px 12px;
+  }
+  .product-icon{ width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0; }
+  .product-body{ flex:1; }
+  .product-name{ font-weight:600; font-size:13.5px; }
+  .product-store{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
+  .product-price{ font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600; color:var(--forest); margin-top:5px; }
+  .buy-btn{
+    font-family:'Inter'; font-weight:600; font-size:11.5px;
+    background:var(--forest); color:#F4F0E3; padding:9px 13px; border-radius:999px;
+    cursor:pointer; white-space:nowrap; flex-shrink:0; border:none;
+  }
+  .buy-btn.done{ background:var(--sage); }
+
+  /* ===================== TAB 4 — INÍCIO ===================== */
+  .profile-card{
+    margin:4px 20px 20px; background:var(--card); border:1.5px solid var(--line);
+    border-radius:var(--radius-lg); padding:18px; display:flex; gap:14px; align-items:center;
+  }
+  .profile-avatar{
+    width:66px; height:66px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #E8B978, var(--butter));
+    border:2.5px solid var(--ink); display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0;
+  }
+  .profile-name{ font-family:'Fraunces', serif; font-weight:600; font-size:19px; }
+  .profile-meta{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+  .profile-badges{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .pbadge{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; background:var(--sage-bg); color:var(--forest); padding:3px 8px; border-radius:6px; }
+
+  .reminders{ margin:0 20px 26px; background:var(--card); border:1.5px solid var(--line); border-radius:var(--radius-lg); padding:18px 18px 8px; }
+  .reminders-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+  .reminders-head h3{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; }
+  .reminders-head span{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); }
+  .reminder-item{ display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--line); }
+  .reminder-item:first-of-type{ border-top:none; }
+  .check{ width:22px; height:22px; border-radius:7px; border:2px solid var(--forest-light); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s ease; }
+  .check.done{ background:var(--forest); border-color:var(--forest); }
+  .check.done::after{ content:'✓'; color:#F4F0E3; font-size:13px; font-weight:700; }
+  .reminder-text{ flex:1; }
+  .reminder-text .t{ font-size:13.5px; font-weight:600; }
+  .reminder-text .t.done{ text-decoration:line-through; color:var(--ink-soft); }
+  .reminder-text .s{ font-size:11.5px; color:var(--ink-soft); margin-top:1px; }
+  .tag{ font-family:'IBM Plex Mono', monospace; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:500; }
+  .add-reminder{ display:flex; align-items:center; gap:8px; padding:13px 0; color:var(--forest-light); font-weight:600; font-size:13px; cursor:pointer; }
+
+  /* bottom nav */
+  .bottomnav{
+    position:absolute; bottom:0; left:0; right:0;
+    background:var(--card); border-top:1.5px solid var(--line);
+    padding:12px 10px 22px; display:flex; justify-content:space-around; z-index:10;
+  }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--ink-soft); font-size:10px; font-weight:600; cursor:pointer; }
+  .nav-item.active{ color:var(--forest); }
+  .nav-icon{ font-size:19px; }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="screen" id="screen">
+
+    <div class="statusbar">
+      <span>9:41</span>
+      <span>◐ 5G ▮▮▮</span>
+    </div>
+
+    <div class="header">
+      <div class="pet-select">
+        <div class="avatar">🐕</div>
+        <div class="pet-name-block">
+          <div class="label">Tutor de</div>
+          <div class="name">Bob <span class="chevron">▾</span></div>
+        </div>
+      </div>
+      <div class="bell">🔔</div>
+    </div>
+
+    <!-- ===================== PAGE 1 — VACINAS (foco) ===================== -->
+    <section class="page active" id="page-vacinas">
+
+      <div class="passport">
+        <div class="passport-eyebrow">Carteira de vacinação · Próxima dose</div>
+        <div class="passport-row">
+          <div>
+            <div class="passport-title">V10 — Polivalente</div>
+            <div class="passport-date">15 OUT · Clínica Vida Animal</div>
+          </div>
+          <div class="stamp">
+            <div class="num">3</div>
+            <div class="txt">dias</div>
+          </div>
+        </div>
+        <div class="passport-stats">
+          <div class="pstat"><div class="n" id="statAplicadas">3</div><div class="l">Aplicadas</div></div>
+          <div class="pstat"><div class="n" id="statProximas">1</div><div class="l">Próximas</div></div>
+          <div class="pstat"><div class="n" id="statAtrasadas">1</div><div class="l">Atrasadas</div></div>
+        </div>
+      </div>
+
+      <div class="segmented" id="segmented">
+        <div class="seg-btn active" data-filter="todas" onclick="setFilter('todas', this)">Todas</div>
+        <div class="seg-btn" data-filter="aplicada" onclick="setFilter('aplicada', this)">Aplicadas</div>
+        <div class="seg-btn" data-filter="pendente" onclick="setFilter('pendente', this)">Pendentes</div>
+      </div>
+
+      <div class="section-label"><span>Registro completo</span><span id="vaxCount">5 itens</span></div>
+
+      <div class="vax-list" id="vaxList">
+
+        <div class="vax-card" data-status="atrasada">
+          <div class="vax-icon atrasada">💉</div>
+          <div class="vax-body">
+            <div class="vax-top">
+              <div>
+                <div class="vax-name">Leishmaniose</div>
+                <div class="vax-type">Vacina</div>
+              </div>
+              <div class="status-pill atrasada">atrasada</div>
+            </div>
+            <div class="vax-meta">Venceu em 20 jul 2026</div>
+            <div class="vax-clinic">Pet Center Capanema</div>
+          </div>
+        </div>
+
+        <div class="vax-card" data-status="pendente">
+          <div class="vax-icon proxima">💉</div>
+          <div class="vax-body">
+            <div class="vax-top">
+              <div>
+                <div class="vax-name">V10 — Polivalente</div>
+                <div class="vax-type">Vacina</div>
+              </div>
+              <div class="status-pill proxima">em 3 dias</div>
+            </div>
+            <div class="vax-meta">Agendada para 15 out 2026</div>
+            <div class="vax-clinic">Clínica Vida Animal</div>
+          </div>
+        </div>
+
+        <div class="vax-card" data-status="aplicada">
+          <div class="vax-icon aplicada">💊</div>
+          <div class="vax-body">
+            <div class="vax-top">
+              <div>
+                <div class="vax-name">Vermífugo — Drontal</div>
+                <div class="vax-type">Medicamento</div>
+              </div>
+              <div class="status-pill aplicada">aplicada</div>
+            </div>
+            <div class="vax-meta">Aplicada em 07 ago 2026</div>
+            <div class="vax-clinic">Em casa</div>
+          </div>
+        </div>
+
+        <div class="vax-card" data-status="aplicada">
+          <div class="vax-icon aplicada">💉</div>
+          <div class="vax-body">
+            <div class="vax-top">
+              <div>
+                <div class="vax-name">Antirrábica</div>
+                <div class="vax-type">Vacina</div>
+              </div>
+              <div class="status-pill aplicada">aplicada</div>
+            </div>
+            <div class="vax-meta">Aplicada em 12 mar 2026</div>
+            <div class="vax-clinic">Clínica Vida Animal</div>
+          </div>
+        </div>
+
+        <div class="vax-card" data-status="aplicada">
+          <div class="vax-icon aplicada">💉</div>
+          <div class="vax-body">
+            <div class="vax-top">
+              <div>
+                <div class="vax-name">Giárdia</div>
+                <div class="vax-type">Vacina</div>
+              </div>
+              <div class="status-pill aplicada">aplicada</div>
+            </div>
+            <div class="vax-meta">Aplicada em 05 jan 2026</div>
+            <div class="vax-clinic">Clínica Vida Animal</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="e-icon">🗂️</div>
+        <div class="e-t">Nada por aqui</div>
+        <div class="e-s">Nenhum registro encontrado para este filtro.</div>
+      </div>
+
+      <div class="fab" onclick="openModal()">+</div>
+    </section>
+
+    <!-- ===================== PAGE 2 — EMERGÊNCIA ===================== -->
+    <section class="page" id="page-emergencia">
+
+      <div class="emg-hero">
+        <div class="emg-eyebrow">Localizador de emergência</div>
+        <div class="emg-title">Se o Bob se perder, este QR leva quem encontrar direto até você.</div>
+        <div class="alert-btn" id="alertBtn" onclick="toggleAlert()">🚨 Ativar alerta de pet perdido</div>
+      </div>
+
+      <div class="section-label">Medalha digital</div>
+      <div class="qr-wrap">
+        <div class="qr-box" id="qrBox"></div>
+        <div class="qr-info">
+          <div class="qt">QR da coleira do Bob</div>
+          <div class="qs">Qualquer pessoa que escanear vê seus contatos e o histórico básico de saúde do Bob.</div>
+        </div>
+      </div>
+
+      <div class="section-label">Última localização</div>
+      <div class="map-mock">
+        <div class="map-pin"></div>
+        <div class="map-tag">📍 Escaneado há 2h · R. das Palmeiras</div>
+      </div>
+
+      <div class="section-label">Contato do tutor</div>
+      <div class="owner-card">
+        <div class="owner-row"><span class="ok">Nome</span><span class="ov">Luana Ferreira</span></div>
+        <div class="owner-row"><span class="ok">Telefone</span><span class="ov">(91) 9 8888-2233</span></div>
+        <div class="owner-row"><span class="ok">Cidade</span><span class="ov">Capanema, PA</span></div>
+        <div class="owner-row"><span class="ok">Observação</span><span class="ov">Alérgico a frango</span></div>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 3 — LOJA PARCEIRA ===================== -->
+    <section class="page" id="page-loja">
+
+      <div class="section-label" style="margin-top:14px;">Parceiros perto de você</div>
+      <div class="store-scroll">
+        <div class="store-card">
+          <div class="store-icon">🏥</div>
+          <div class="store-name">Clínica Vida Animal</div>
+          <div class="store-meta">Vacinas · Consultas</div>
+          <div class="store-dist">1,2 km · aberto agora</div>
+        </div>
+        <div class="store-card">
+          <div class="store-icon">🛍️</div>
+          <div class="store-name">Pet Center Capanema</div>
+          <div class="store-meta">Ração · Banho e tosa</div>
+          <div class="store-dist">2,0 km · aberto agora</div>
+        </div>
+        <div class="store-card">
+          <div class="store-icon">💊</div>
+          <div class="store-name">Farmácia Pet Amiga</div>
+          <div class="store-meta">Medicamentos</div>
+          <div class="store-dist">3,4 km · fecha 18h</div>
+        </div>
+      </div>
+
+      <div class="section-label">Catálogo</div>
+      <div class="product-list">
+
+        <div class="product-card">
+          <div class="product-icon" style="background:var(--butter-bg);">🥫</div>
+          <div class="product-body">
+            <div class="product-name">Ração Premium 15kg</div>
+            <div class="product-store">Pet Center Capanema</div>
+            <div class="product-price">R$ 189,90</div>
+          </div>
+          <button class="buy-btn" onclick="buyItem(this)">Comprar</button>
+        </div>
+
+        <div class="product-card">
+          <div class="product-icon" style="background:var(--clay-bg);">💊</div>
+          <div class="product-body">
+            <div class="product-name">Vermífugo Drontal Plus</div>
+            <div class="product-store">Farmácia Pet Amiga</div>
+            <div class="product-price">R$ 34,50</div>
+          </div>
+          <button class="buy-btn" onclick="buyItem(this)">Comprar</button>
+        </div>
+
+        <div class="product-card">
+          <div class="product-icon" style="background:var(--sage-bg);">🦴</div>
+          <div class="product-body">
+            <div class="product-name">Petisco natural 500g</div>
+            <div class="product-store">Pet Center Capanema</div>
+            <div class="product-price">R$ 22,00</div>
+          </div>
+          <button class="buy-btn" onclick="buyItem(this)">Comprar</button>
+        </div>
+
+        <div class="product-card">
+          <div class="product-icon" style="background:var(--butter-bg);">🧸</div>
+          <div class="product-body">
+            <div class="product-name">Brinquedo mordedor</div>
+            <div class="product-store">Pet Center Capanema</div>
+            <div class="product-price">R$ 18,90</div>
+          </div>
+          <button class="buy-btn" onclick="buyItem(this)">Solicitar</button>
+        </div>
+
+        <div class="product-card">
+          <div class="product-icon" style="background:var(--sage-bg);">🩺</div>
+          <div class="product-body">
+            <div class="product-name">Consulta de rotina</div>
+            <div class="product-store">Clínica Vida Animal</div>
+            <div class="product-price">R$ 120,00</div>
+          </div>
+          <button class="buy-btn" onclick="buyItem(this)">Agendar</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 4 — INÍCIO ===================== -->
+    <section class="page" id="page-inicio">
+
+      <div class="profile-card">
+        <div class="profile-avatar">🐕</div>
+        <div>
+          <div class="profile-name">Bob</div>
+          <div class="profile-meta">Labrador · 3 anos · 24,3 kg</div>
+          <div class="profile-badges">
+            <div class="pbadge">Alergia: frango</div>
+            <div class="pbadge">Castrado</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reminders">
+        <div class="reminders-head">
+          <h3>Hoje</h3>
+          <span>QUI · 07 AGO</span>
+        </div>
+
+        <div class="reminder-item">
+          <div class="check done" onclick="toggleReminder(this)"></div>
+          <div class="reminder-text">
+            <div class="t done">🥣 Ração — 150g (manhã)</div>
+            <div class="s">Feito às 08:00</div>
+          </div>
+          <div class="tag" style="background:var(--sage-bg); color:var(--forest);">feito</div>
+        </div>
+
+        <div class="reminder-item">
+          <div class="check" onclick="toggleReminder(this)"></div>
+          <div class="reminder-text">
+            <div class="t">🥣 Ração — 150g (tarde)</div>
+            <div class="s">Refeição da tarde</div>
+          </div>
+          <div class="tag" style="background:var(--butter-bg); color:#8A6217;">17:30</div>
+        </div>
+
+        <div class="reminder-item">
+          <div class="check" onclick="toggleReminder(this)"></div>
+          <div class="reminder-text">
+            <div class="t">💊 Vermífugo — 1 comprimido</div>
+            <div class="s">Programado para 20:00</div>
+          </div>
+          <div class="tag" style="background:var(--butter-bg); color:#8A6217;">20:00</div>
+        </div>
+
+        <div class="reminder-item">
+          <div class="check" onclick="toggleReminder(this)"></div>
+          <div class="reminder-text">
+            <div class="t">🧼 Banho & tosa</div>
+            <div class="s">Pet Shop Amigo Fiel</div>
+          </div>
+          <div class="tag" style="background:var(--clay-bg); color:var(--clay);">atrasado</div>
+        </div>
+
+        <div class="reminder-item">
+          <div class="check" onclick="toggleReminder(this)"></div>
+          <div class="reminder-text">
+            <div class="t">💉 V10 — Polivalente</div>
+            <div class="s">Ver na aba Vacinas</div>
+          </div>
+          <div class="tag" style="background:var(--butter-bg); color:#8A6217;">3 dias</div>
+        </div>
+
+        <div class="add-reminder" onclick="switchTab('vacinas')">+ Adicionar lembrete</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- modal: novo registro de vacina/medicamento -->
+  <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Novo registro</div>
+      <form id="vaxForm" onsubmit="addVaccine(event)">
+        <div class="field">
+          <label for="fName">Nome</label>
+          <input id="fName" type="text" placeholder="Ex: Antirrábica" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="fType">Tipo</label>
+            <select id="fType">
+              <option value="Vacina">Vacina</option>
+              <option value="Vermífugo">Vermífugo</option>
+              <option value="Medicamento">Medicamento</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fStatus">Status</label>
+            <select id="fStatus">
+              <option value="aplicada">Aplicada</option>
+              <option value="agendada">Agendada</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fDate">Data</label>
+          <input id="fDate" type="date" required>
+        </div>
+        <div class="field">
+          <label for="fClinic">Clínica / local</label>
+          <input id="fClinic" type="text" placeholder="Ex: Clínica Vida Animal">
+        </div>
+        <div class="modal-actions">
+          <div class="btn btn-ghost" onclick="closeModal()">Cancelar</div>
+          <button type="submit" class="btn btn-primary" style="border:none;">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="bottomnav">
+    <div class="nav-item active" data-tab="vacinas" onclick="switchTab('vacinas')"><div class="nav-icon">💉</div>Vacinas</div>
+    <div class="nav-item" data-tab="emergencia" onclick="switchTab('emergencia')"><div class="nav-icon">🐾</div>Emergência</div>
+    <div class="nav-item" data-tab="loja" onclick="switchTab('loja')"><div class="nav-icon">🛒</div>Loja</div>
+    <div class="nav-item" data-tab="inicio" onclick="switchTab('inicio')"><div class="nav-icon">🏠</div>Início</div>
+  </div>
+</div>
+
+<script>
+  // ---------- navegação entre abas ----------
+  function switchTab(name){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === name));
+    document.getElementById('screen').scrollTop = 0;
+  }
+
+  // ---------- QR code decorativo (padrão pseudo-aleatório fixo) ----------
+  (function drawQR(){
+    const box = document.getElementById('qrBox');
+    const pattern = [1,1,1,0,1, 1,0,1,0,0, 0,1,1,1,0, 1,0,0,1,1, 0,1,0,1,1];
+    pattern.forEach(v => {
+      const s = document.createElement('span');
+      if(!v) s.classList.add('off');
+      box.appendChild(s);
+    });
+  })();
+
+  // ---------- alerta de emergência ----------
+  function toggleAlert(){
+    const btn = document.getElementById('alertBtn');
+    const active = btn.classList.toggle('active');
+    btn.textContent = active ? '✓ Alerta ativo — buscando o Bob' : '🚨 Ativar alerta de pet perdido';
+  }
+
+  // ---------- checklist da rotina ----------
+  function toggleReminder(el){
+    const done = el.classList.toggle('done');
+    const label = el.nextElementSibling.querySelector('.t');
+    label.classList.toggle('done', done);
+  }
+
+  // ---------- loja ----------
+  function buyItem(btn){
+    btn.textContent = 'Solicitado ✓';
+    btn.classList.add('done');
+    btn.disabled = true;
+  }
+
+  // ---------- filtro de vacinas ----------
+  function setFilter(filter, el){
+    document.querySelectorAll('#segmented .seg-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    const cards = document.querySelectorAll('#vaxList .vax-card');
+    let visible = 0;
+    cards.forEach(c => {
+      const match = filter === 'todas' || c.dataset.status === filter;
+      c.style.display = match ? 'flex' : 'none';
+      if(match) visible++;
+    });
+    document.getElementById('vaxCount').textContent = visible + (visible === 1 ? ' item' : ' itens');
+    document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  // ---------- estatísticas do topo ----------
+  function updateStats(){
+    const cards = document.querySelectorAll('#vaxList .vax-card');
+    let aplicadas = 0, proximas = 0, atrasadas = 0;
+    cards.forEach(c => {
+      if(c.dataset.status === 'aplicada') aplicadas++;
+      else if(c.dataset.status === 'atrasada') atrasadas++;
+      else proximas++;
+    });
+    document.getElementById('statAplicadas').textContent = aplicadas;
+    document.getElementById('statProximas').textContent = proximas;
+    document.getElementById('statAtrasadas').textContent = atrasadas;
+  }
+
+  // ---------- modal: adicionar vacina/medicamento ----------
+  function openModal(){ document.getElementById('modalOverlay').classList.add('open'); }
+  function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); document.getElementById('vaxForm').reset(); }
+
+  const typeIcons = { 'Vacina':'💉', 'Vermífugo':'💊', 'Medicamento':'💊' };
+
+  function addVaccine(e){
+    e.preventDefault();
+    const name = document.getElementById('fName').value.trim();
+    const type = document.getElementById('fType').value;
+    const status = document.getElementById('fStatus').value; // aplicada | agendada
+    const dateRaw = document.getElementById('fDate').value;
+    const clinic = document.getElementById('fClinic').value.trim() || 'Não informado';
+
+    const dateObj = dateRaw ? new Date(dateRaw + 'T00:00:00') : new Date();
+    const dateFmt = dateObj.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' }).replace('.', '');
+
+    const dataStatus = status === 'aplicada' ? 'aplicada' : 'pendente';
+    const iconClass = status === 'aplicada' ? 'aplicada' : 'agendada';
+    const pillClass = status === 'aplicada' ? 'aplicada' : 'agendada';
+    const pillText = status === 'aplicada' ? 'aplicada' : 'agendada';
+    const metaText = status === 'aplicada' ? ('Aplicada em ' + dateFmt) : ('Agendada para ' + dateFmt);
+
+    const card = document.createElement('div');
+    card.className = 'vax-card';
+    card.dataset.status = dataStatus;
+    card.innerHTML =
+      '<div class="vax-icon ' + iconClass + '">' + (typeIcons[type] || '💉') + '</div>' +
+      '<div class="vax-body">' +
+        '<div class="vax-top">' +
+          '<div><div class="vax-name">' + name + '</div><div class="vax-type">' + type + '</div></div>' +
+          '<div class="status-pill ' + pillClass + '">' + pillText + '</div>' +
+        '</div>' +
+        '<div class="vax-meta">' + metaText + '</div>' +
+        '<div class="vax-clinic">' + clinic + '</div>' +
+      '</div>';
+
+    document.getElementById('vaxList').prepend(card);
+    updateStats();
+    setFilter(document.querySelector('#segmented .seg-btn.active').dataset.filter, document.querySelector('#segmented .seg-btn.active'));
+    closeModal();
+  }
+
+  updateStats();
+</script>
+
+</body>
+</html>
